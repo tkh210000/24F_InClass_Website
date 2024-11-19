@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OVER UNDER DOUBLE SAME Game</title>
+    <style>
+        body {
+            font-family: Palatino, serif;
+            background-color: #2b2c28;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #fffafb;
+        }
+        .game-container {
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+            background-color: #7de2d1;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .dice-rolls, .wager-section, .result {
+            margin: 20px 0;
+        }
+        .dice {
+            font-size: 24px;
+            padding: 10px;
+            background-color: #339989;
+            border-radius: 5px;
+            margin: 10px;
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #2b2c28;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        button:disabled {
+            background-color: #999999;
+        }
+        .wager-section input {
+            width: 50px;
+            padding: 5px;
+            text-align: center;
+        }
+        .result {
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+        }
+        /* Animation for rolling dice */
+        @keyframes roll {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(90deg); }
+            50% { transform: rotate(180deg); }
+            75% { transform: rotate(270deg); }
+        }
+        .rolling {
+            animation: roll 0.3s infinite;
+        }
+        .selected-bet {
+            background-color: #76d5fe;
+        }
+        .rules-box {
+            width: 40%;
+            margin: 0 auto;
+            text-align: left;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+			background-color: #7de2d1;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #2b2c28;
+        }
+    </style>
+</head>
+<body>
+    <h1>OVER UNDER DOUBLE SAME</h1>
+    
+    <div class="rules-box">
+        <h3>Game Rules:</h3>
+        <ul>
+            <li>Roll 1 and Roll 2 each involve rolling two dice.</li>
+            <li>After Roll 1, the sum is displayed. Place your bet on whether Roll 2's sum will be "Over," "Under," "Same," or "Double."</li>
+            <li>If both dice in Roll 2 match (Double), or Roll 2 equals Roll 1 (Same), you lose the wager.</li>
+            <li>If your bet is correct, you gain points equal to your wager; otherwise, you lose them.</li>
+        </ul>
+    </div>
+	
+	<br>
+    
+    <div class="game-container">
+        <div class="dice-rolls">
+            <div class="roll1">
+                <h2>Roll 1</h2>
+                <p>Dice 1: <span id="roll1-dice1" class="dice">-</span></p>
+                <p>Dice 2: <span id="roll1-dice2" class="dice">-</span></p>
+                <p>SUM: <span id="roll1-sum">-</span></p>
+            </div>
+            <button id="roll1-button">Roll 1</button>
+        </div>
+        
+        <div class="wager-section" style="display: none;">
+            <h2>Place Your Bet</h2>
+            <p>Wager (0-10 points): <input type="number" id="wager" min="0" max="10" value="0" /></p>
+            <p>Bet on: 
+                <label><input type="radio" name="bet" value="over"> Over</label>
+                <label><input type="radio" name="bet" value="under"> Under</label>
+            </p>
+        </div>
+        
+        <div class="dice-rolls">
+            <div class="roll2">
+                <h2>Roll 2</h2>
+                <p>Dice 1: <span id="roll2-dice1" class="dice">-</span></p>
+                <p>Dice 2: <span id="roll2-dice2" class="dice">-</span></p>
+                <p>SUM: <span id="roll2-sum">-</span></p>
+            </div>
+            <button id="roll2-button" disabled>Roll 2</button>
+        </div>
+        
+        <div class="result" id="result"></div>
+        <div class="current-points">
+            <h3>Your Points: <span id="points">20</span></h3>
+        </div>
+        <button id="play-again-button" style="display: none;">Play Again</button>
+    </div>
+
+   <!-- The code up to the script section remains the same -->
+
+<script>
+    let points = 20;
+    let roll1Sum = 0;
+    let bet = '';
+
+    function rollDie() {
+        return Math.floor(Math.random() * 6) + 1;
+    }
+
+    // Function to simulate dice roll animation and delay
+    function animateDice(diceElement) {
+        diceElement.classList.add("rolling");
+        return new Promise(resolve => {
+            setTimeout(() => {
+                diceElement.classList.remove("rolling");
+                resolve(rollDie());
+            }, 1000); // Set delay to 1 second for rolling effect
+        });
+    }
+
+    // Retrieve the wager value from input each time a roll happens
+    function getWagerValue() {
+        const wagerInput = document.getElementById('wager');
+        const wager = parseInt(wagerInput.value, 10);
+        return isNaN(wager) || wager < 0 ? 0 : Math.min(wager, 10);
+    }
+
+    document.getElementById('roll1-button').addEventListener('click', async function() {
+        const dice1Element = document.getElementById('roll1-dice1');
+        const dice2Element = document.getElementById('roll1-dice2');
+
+        // Start animation for both dice
+        const dice1 = await animateDice(dice1Element);
+        const dice2 = await animateDice(dice2Element);
+        roll1Sum = dice1 + dice2;
+
+        // Display rolled values
+        dice1Element.textContent = dice1;
+        dice2Element.textContent = dice2;
+        document.getElementById('roll1-sum').textContent = roll1Sum;
+
+        document.getElementById('roll1-button').disabled = true;
+        document.querySelector('.wager-section').style.display = 'block';
+    });
+
+    document.querySelectorAll('[name="bet"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            bet = this.value;
+            enableRoll2Button();
+        });
+    });
+
+    function enableRoll2Button() {
+        if (bet !== '') {
+            document.getElementById('roll2-button').disabled = false;
+        }
+    }
+
+    document.getElementById('roll2-button').addEventListener('click', async function() {
+        const dice1Element = document.getElementById('roll2-dice1');
+        const dice2Element = document.getElementById('roll2-dice2');
+        const wager = getWagerValue();
+
+        // Start animation for both dice
+        const dice1 = await animateDice(dice1Element);
+        const dice2 = await animateDice(dice2Element);
+        const roll2Sum = dice1 + dice2;
+
+        dice1Element.textContent = dice1;
+        dice2Element.textContent = dice2;
+        document.getElementById('roll2-sum').textContent = roll2Sum;
+
+        let outcomeMessage = "";
+        let winOrLoseMessage = "";
+
+        if (dice1 === dice2) {
+            outcomeMessage = "Double!";
+            points -= wager;
+            winOrLoseMessage = `Round lost! You lost ${wager} points.`;
+        } else if (roll2Sum === roll1Sum) {
+            outcomeMessage = "Same!";
+            points -= wager;
+            winOrLoseMessage = `Round lost! You lost ${wager} points.`;
+        } else if (roll2Sum > roll1Sum) {
+            outcomeMessage = "Over!";
+            if (bet === 'over') {
+                points += wager;
+                winOrLoseMessage = `You won! You gained ${wager} points.`;
+            } else {
+                points -= wager;
+                winOrLoseMessage = `You lost! You lost ${wager} points.`;
+            }
+        } else {
+            outcomeMessage = "Under!";
+            if (bet === 'under') {
+                points += wager;
+                winOrLoseMessage = `You won! You gained ${wager} points.`;
+            } else {
+                points -= wager;
+                winOrLoseMessage = `You lost! You lost ${wager} points.`;
+            }
+        }
+
+        // Display results
+        document.getElementById('result').innerHTML = `
+             ${outcomeMessage}<br>
+            ${winOrLoseMessage}
+        `;
+
+        document.getElementById('points').textContent = points;
+        document.getElementById('roll2-button').disabled = true;
+        document.querySelector('.wager-section').style.display = 'none';
+        document.getElementById('play-again-button').style.display = 'block';
+    });
+
+    document.getElementById('play-again-button').addEventListener('click', function() {
+        // Reset game for next round
+        document.getElementById('roll1-dice1').textContent = '-';
+        document.getElementById('roll1-dice2').textContent = '-';
+        document.getElementById('roll1-sum').textContent = '-';
+        document.getElementById('roll2-dice1').textContent = '-';
+        document.getElementById('roll2-dice2').textContent = '-';
+        document.getElementById('roll2-sum').textContent = '-';
+        document.getElementById('result').textContent = '';
+        document.querySelectorAll('[name="bet"]').forEach(radio => radio.checked = false);
+        document.getElementById('roll1-button').disabled = false;
+        document.getElementById('roll2-button').disabled = true;
+        document.querySelector('.wager-section').style.display = 'none';
+        bet = '';
+        document.getElementById('play-again-button').style.display = 'none';
+    });
+</script>
+
+</body>
+</html>
